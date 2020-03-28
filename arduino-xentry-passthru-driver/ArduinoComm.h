@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef ARDUINO_COMM_H_
+#define ARDUINO_COMM_H_
+
 #define BAUD_RATE 115200
 #define COM_PORT 4
 
@@ -19,7 +22,7 @@ namespace ArduinoComm
 
 	bool SendCommand(const char* cmd);
 
-
-
 };
+
+#endif
 

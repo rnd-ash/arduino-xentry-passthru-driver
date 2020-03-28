@@ -1,16 +1,17 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
-#include "pch.h"
-#include "Logger.h"
-#include "XentryComm.h"
 
+#include "arduino_passthru.h"
+#include "pch.h"
+#include "XentryComm.h"
+#include "Logger.h"
 
 bool startup() {
-    LOGGER.logInfo("Setting up!");
+    LOGGER.logInfo("dllmain::startup", "Setting up!");
     return XentryComm::CreateCommThread();
 }
 
 void close() {
-    LOGGER.logInfo("Exiting dll");
+    LOGGER.logInfo("dllmain::close", "Exiting dll");
     XentryComm::CloseCommThread();
 }
 
@@ -19,11 +20,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                        LPVOID lpReserved
                      )
 {
-    LOGGER.logInfo("Arduino-Xentry-Passthru v0.1");
+    LOGGER.logInfo("dllmain", "Arduino-Xentry-Passthru v0.1");
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-        LOGGER.logInfo("Process atached!");
+        LOGGER.logInfo("dllmain", "Process atached!");
         if (!startup()) {
             return FALSE;
         }
@@ -33,10 +34,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     case DLL_THREAD_DETACH:
         break;
     case DLL_PROCESS_DETACH:
-        LOGGER.logInfo("Process detached!");
+        LOGGER.logInfo("dllmain", "Process detached!");
         close();
         break;
     }
     return TRUE;
 }
-

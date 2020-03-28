@@ -1,29 +1,20 @@
 Windows Registry Editor Version 5.00
 
-[HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\PassThruSupport.04.04\Arduino-Passthru COM3]
-"APIVersion"="04.04"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\PassThruSupport.04.04\Arduino-Passthru]
+"SerialNumber"="111111111"
+"HardwareType"="Arduino"
 "Vendor"="rnd-ash@github.com"
-"Name"="Arduino-Passthru COM3"
-"ConfigApplication"="c:\\arduino-xentry-passthru\\configure.exe"
-"COM_PORT"=dword:3
-"BAUD_RATE"=dword:1C200
+"Name"="Arduino Passthru"
+"FunctionLibrary"="C:\\arduino_passthru\\arduino_passthru_driver.dll"
 "CAN"=dword:00000001
 "ISO15765"=dword:00000001
 "ISO9141"=dword:00000001
 "ISO14230"=dword:00000001
-"FunctionLibrary"="C:\\arduino-xentry-passthru\\arduino-xentry-passthru-driver.dll"
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\PassThruSupport.04.04\Arduino-Passthru COM4]
-"APIVersion"="04.04"
-"Vendor"="rnd-ash@github.com"
-"Name"="Arduino-Passthru COM4"
-"ConfigApplication"="c:\\arduino-xentry-passthru\\configure.exe"
-"COM_PORT"=dword:4
-"BAUD_RATE"=dword:1C200
-"CAN"=dword:00000001
-"ISO15765"=dword:00000001
-"ISO9141"=dword:00000001
-"ISO14230"=dword:00000001
-"FunctionLibrary"="C:\\arduino-xentry-passthru\\arduino-xentry-passthru-driver.dll"
+"J1850PWM"=dword:00000000
+"J1850VPW"=dword:00000000
+"SCI_A_ENGINE"=dword:00000000
+"SCI_B_ENGINE"=dword:00000000
+"SCI_A_TRANS"=dword:00000000
+"SCI_B_TRANS"=dword:00000000
 
 

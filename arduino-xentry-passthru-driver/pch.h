@@ -1,13 +1,17 @@
-// pch.h: This is a precompiled header file.
-// Files listed below are compiled only once, improving build performance for future builds.
-// This also affects IntelliSense performance, including code completion and many code browsing features.
-// However, files listed here are ALL re-compiled if any one of them is updated between builds.
-// Do not add files here that you will be updating frequently as this negates the performance advantage.
+// pch.h : include file for standard system include files,
+// or project specific include files that are used frequently, but
+// are changed infrequently
+//
 
-#ifndef PCH_H
-#define PCH_H
+#pragma once
 
-// add headers that you want to pre-compile here
-#include "framework.h"
+#include <SDKDDKVer.h>
 
-#endif //PCH_H
+#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+// Windows Header Files:
+#include <windows.h>
+#include <tchar.h>
+
+
+
+// TODO: reference additional headers your program requires here

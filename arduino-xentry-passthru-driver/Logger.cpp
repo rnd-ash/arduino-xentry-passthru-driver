@@ -1,19 +1,18 @@
-#include "pch.h"
 #include "Logger.h"
 
 
-void Logger::logInfo(std::string message) {
-	writeToFile("[INFO ] " + message);
+void Logger::logInfo(std::string method, std::string message) {
+	writeToFile("[INFO ] " + method + " - " + message);
 }
 
-void Logger::logWarn(std::string message)
+void Logger::logWarn(std::string method, std::string message)
 {
-	writeToFile("[WARN ] " + message);
+	writeToFile("[WARN ] " + method + " - " + message);
 }
 
-void Logger::logError(std::string message)
+void Logger::logError(std::string method, std::string message)
 {
-	writeToFile("[ERROR] " + message);
+	writeToFile("[ERROR] " + method + " - " + message);
 }
 
 std::string Logger::bytesToString(const char* bytes)
@@ -21,7 +20,7 @@ std::string Logger::bytesToString(const char* bytes)
 	std::string ret = "";
 
 	char buf[4];
-	for (int i = 0; i < sizeof(&bytes) / sizeof(char); i++) {
+	for (int i = 0; i < sizeof(bytes); i++) {
 		sprintf_s(buf, "%02X ", bytes[i]);
 		ret += buf;
 	}
