@@ -3,7 +3,7 @@
 #ifndef DLL_EXP_H_
 #define DLL_EXP_H_
 
-#include "j2534_v0404.h"
+#include "defines.h"
 
 extern PTOPEN	PassThruOpen;
 extern PTCLOSE	PassThruClose;

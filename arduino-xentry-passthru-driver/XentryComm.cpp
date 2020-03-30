@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "Logger.h"
+#include "XentryComm.h"
+#include "ArduinoComm.h"
 
 namespace XentryComm{
 
@@ -17,6 +19,14 @@ namespace XentryComm{
 		CloseHandle(exitEvent);
 		CloseHandle(commEvent);
 		CloseHandle(closedEvent);
+	}
+
+	int WaitUntilReady(const char* deviceName, unsigned long timeout) {
+		LOGGER.logInfo("XentryComm::Wait", "Waiting for Arduino to be ready");
+		if (ArduinoComm::isConnected()) {
+			return 0;
+		}
+		return 0;
 	}
 
 	void CloseCommThread() {

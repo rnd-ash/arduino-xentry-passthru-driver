@@ -18,7 +18,7 @@ namespace ArduinoComm
 
 	INIT_STATE OpenConnection();
 	
-	bool isConnected = false;
+	bool isConnected();
 
 	bool SendCommand(const char* cmd);
 

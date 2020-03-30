@@ -20,11 +20,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                        LPVOID lpReserved
                      )
 {
-    LOGGER.logInfo("dllmain", "Arduino-Xentry-Passthru v0.1");
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-        LOGGER.logInfo("dllmain", "Process atached!");
         if (!startup()) {
             return FALSE;
         }

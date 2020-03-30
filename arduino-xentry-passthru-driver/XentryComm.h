@@ -9,7 +9,7 @@ namespace XentryComm {
 	void CloseCommThread();
 	bool CreateEvents();
 	void CloseHandles();
-	int WaitUntilInitialized(const char* deviceName, unsigned long timeout);
+	int WaitUntilReady(const char* deviceName, unsigned long timeout);
 };
 
 //#endif
