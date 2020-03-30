@@ -25,7 +25,7 @@ bool CAN_HANDLER::sendFrame(_PASSTHRU_MSG *msg) {
 		LOGGER.logInfo("CAN", "Sending ISO Frame: " + LOGGER.frame_to_string(&f));
 		DATA_PAYLOAD x = { 0x00 };
 		frameToPayload(&x, &f);
-		return ArduinoComm::writeData("TESTING!", 9);
+		return ArduinoComm::writeData(&x);
 	}
 
 

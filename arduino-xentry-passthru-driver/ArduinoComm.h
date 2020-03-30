@@ -12,7 +12,7 @@ namespace ArduinoComm
 	bool OpenPort();
 	void ClosePort();
 
-	bool writeData(const char* buf, int buflen);
+	bool writeData(DATA_PAYLOAD* f);
 	bool readFrame(DATA_PAYLOAD *f);
 	bool isConnected();
 };

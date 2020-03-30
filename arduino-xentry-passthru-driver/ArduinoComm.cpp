@@ -8,6 +8,7 @@ namespace ArduinoComm {
 	bool connected = false;
 
 	std::mutex mutex;
+	char txBuffer[255] = { 0x00 };
 
 	bool OpenPort() {
 		mutex.lock();
@@ -30,7 +31,7 @@ namespace ArduinoComm {
 		params.ByteSize = 8;
 		params.StopBits = ONESTOPBIT;
 		params.Parity = NOPARITY;
-		params.fDtrControl = DTR_CONTROL_ENABLE;
+		params.fDtrControl = DTR_CONTROL_DISABLE;
 
 		if (!SetCommState(handler, &params)) {
 			LOGGER.logError("ARDUINO", "Cannot set comm states");
@@ -51,15 +52,27 @@ namespace ArduinoComm {
 		connected = false;
 	}
 
-	bool writeData(const char* buf, int buflen) {
+	bool writeData(DATA_PAYLOAD* f) {
+		// Result
 		DWORD written = 0;
-		if (buflen > 255) {
+		// Too big for 1 payload for arduino - TODO - split payloads
+		if (f->data_len > 245) {
 			LOGGER.logError("ARDUINO", "Tx payload too big!");
 			return false;
 		}
 		mutex.lock();
-		if (!WriteFile(handler, (void*) buf, buflen, &written, NULL)) {
+		memset(txBuffer, 0x00, sizeof(txBuffer));
+		txBuffer[0] = f->type;
+		txBuffer[1] = f->data_len;
+		memcpy(&txBuffer[2], f->buffer, f->data_len);
+
+
+		if (!WriteFile(handler, txBuffer, f->data_len + 2, &written, NULL)) {
 			LOGGER.logError("ARDUINO", "Error writing to Arduino!");
+			DWORD error = GetLastError();
+			char buf[32];
+			sprintf_s(buf, "Error code %d", error);
+			LOGGER.logWarn("ARDUINO", std::string(buf));
 			mutex.unlock();
 			return false;
 		}
