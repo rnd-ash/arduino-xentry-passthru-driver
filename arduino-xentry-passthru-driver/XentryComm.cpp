@@ -5,7 +5,7 @@
 
 namespace XentryComm{
 
-	HANDLE thread; // Comm thread
+	HANDLE thread = NULL; // Comm thread
 	HANDLE askInitEvent; // Handle for if other threads want to init
 	HANDLE commEvent; // Handle for event from arduino
 	HANDLE exitEvent; // Handle for exiting / closing thread
@@ -23,10 +23,17 @@ namespace XentryComm{
 
 	int WaitUntilReady(const char* deviceName, unsigned long timeout) {
 		LOGGER.logInfo("XentryComm::Wait", "Waiting for Arduino to be ready");
+		char buf[20] = { 0x00 };
+		sprintf_s(buf,"SIZE: %lu\n", sizeof(struct CAN_FRAME));
+		LOGGER.logInfo("TEST", buf);
 		if (ArduinoComm::isConnected()) {
 			return 0;
+		} else {
+			if (ArduinoComm::OpenPort()) {
+				return 0;
+			}
 		}
-		return 0;
+		return 1;
 	}
 
 	void CloseCommThread() {
@@ -111,7 +118,7 @@ namespace XentryComm{
 
 	bool CreateCommThread() {
 		// Check if thread is already running
-		if (thread != NULL) {
+		if (thread == NULL) {
 			LOGGER.logInfo("XentryComm::CreateCommThread", "Creating events for thread");
 			if (!CreateEvents()) {
 				LOGGER.logError("XentryComm::CreateCommThread", "Failed to create events!");
@@ -124,6 +131,10 @@ namespace XentryComm{
 				return false;
 			}
 			LOGGER.logInfo("XentryComm::CreateCommThread", "Thread created!");
+		}
+		if (WaitUntilReady("", 3000) != 0) {
+			LOGGER.logInfo("XentryComm::CreateCommThread", "Arduino could not be created!");
+			return false;
 		}
 		return true;
 	}

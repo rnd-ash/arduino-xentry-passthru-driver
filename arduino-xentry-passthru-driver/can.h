@@ -5,16 +5,14 @@
 
 #include "j2534_v0404.h"
 #include <stdint.h>
+#include <Windows.h>
 
-typedef unsigned char __u8;
-typedef unsigned short __u16;
-typedef unsigned long __u32;
-
+#define CAN_MESSAGE_PAYLOAD 0x01;
 
 struct CAN_FRAME {
-	__u32 can_id;
-	__u8 can_dlc;
-	__u8 data[8];
+	uint32_t can_id;
+	uint8_t can_dlc;
+	__declspec(align(8)) uint8_t data[8];
 };
 
 struct CAN_PAYLOAD {
@@ -22,8 +20,14 @@ struct CAN_PAYLOAD {
 	int frame_count;
 };
 
+struct DATA_PAYLOAD {
+	unsigned char type;
+	unsigned char data_len;
+	unsigned char buffer[248];
+};
+
 namespace CAN_HANDLER {
-	CAN_PAYLOAD sendFrame(_PASSTHRU_MSG *msg);
+	bool sendFrame(_PASSTHRU_MSG *msg);
 };
 
 #endif

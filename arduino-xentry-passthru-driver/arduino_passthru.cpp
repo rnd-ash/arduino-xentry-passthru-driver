@@ -79,7 +79,9 @@ DllExport PassThruWriteMsgs(unsigned long ChannelID, PASSTHRU_MSG* pMsg, unsigne
 	for (unsigned long i = 0; i < *pNumMsgs; i++) {
 		LOGGER.logInfo("PassThrough", "--> Write Message: " + LOGGER.passThruMsg_toString(&pMsg[i]));
 		if (pMsg[i].ProtocolID == ISO15765) {
-			CAN_HANDLER::sendFrame(&pMsg[i]);
+			if (!CAN_HANDLER::sendFrame(&pMsg[i])) {
+				return ERROR_NOT_CONNECTED;
+			}
 		}
 	}
 	return STATUS_NOERROR;
@@ -185,8 +187,16 @@ http://www.drewtech.com/support/passthru/ioctl.html
 The PassThruIoctl function is a general purpose I/O control function for modifying the vehicle network interface's characteristics.
 */
 DllExport PassThruIoctl(unsigned long ChannelID, unsigned long IoctlID, void* pInput, void* pOutput) {
-	char buf[1024];
-	sprintf_s(buf, "IOTCTL: Channel ID: %d ,IOCTLID: %d, Input: %d, Output: %d", ChannelID, IoctlID, pInput, pOutput);
-	LOGGER.logInfo("PassThrough", "Command received: " + std::string(buf));
+
+	// Want battery voltage, as we cannot do that, return 12.0
+	if (IoctlID == READ_VBATT) {
+		*((int*)(pOutput)) = 12100;
+		LOGGER.logInfo("PassThrough", "Sending 12.1V via IOCTL");
+	} else {
+		char buf[1024];
+		sprintf_s(buf, "IOTCTL: Channel ID: %d ,IOCTLID: %d, Input: %d, Output: %d", ChannelID, IoctlID, pInput, pOutput);
+		LOGGER.logInfo("PassThrough", "Command received: " + std::string(buf));
+	}
+
 	return STATUS_NOERROR;
 }

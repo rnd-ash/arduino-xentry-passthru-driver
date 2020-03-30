@@ -3,25 +3,18 @@
 #ifndef ARDUINO_COMM_H_
 #define ARDUINO_COMM_H_
 
-#define BAUD_RATE 115200
-#define COM_PORT 4
+#include <mutex>
+#include <Windows.h>
+#include "can.h"
 
 namespace ArduinoComm
 {
-	enum INIT_STATE {
-		OK, // Open successful
-		FAIL, // Open failed
-		IN_USE, // In use by something else
-		ALREADY_OPEN // In use by this process
-	};
+	bool OpenPort();
+	void ClosePort();
 
-
-	INIT_STATE OpenConnection();
-	
+	bool writeData(const char* buf, int buflen);
+	bool readFrame(DATA_PAYLOAD *f);
 	bool isConnected();
-
-	bool SendCommand(const char* cmd);
-
 };
 
 #endif
