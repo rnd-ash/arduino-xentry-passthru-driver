@@ -14,6 +14,27 @@ void Logger::logError(std::string method, std::string message)
 	writeToFile("[ERROR] " + method + " - " + message);
 }
 
+void Logger::logInfo(std::string method, const char* fmt, ...) {
+	va_list fmtargs;
+	va_start(fmtargs, fmt);
+	writeToFile("[INFO ] " + method + " - " + argFormatToString(fmt, fmtargs));
+
+}
+
+void Logger::logWarn(std::string method, const char* fmt, ...) {
+	va_list fmtargs;
+	va_start(fmtargs, fmt);
+	writeToFile("[WARN ] " + method + " - " + argFormatToString(fmt, fmtargs));
+
+}
+
+void Logger::logError(std::string method, const char* fmt, ...) {
+	va_list fmtargs;
+	va_start(fmtargs, fmt);
+	writeToFile("[ERROR] " + method + " - " + argFormatToString(fmt, fmtargs));
+
+}
+
 std::string Logger::passThruMsg_toString(_PASSTHRU_MSG *msg) {
 	char buf[5120] = { 0x00 };
 	if (msg != NULL) {
@@ -81,6 +102,15 @@ std::string Logger::bytesToString(int size,  unsigned char* bytes)
 		ret += buf;
 	}
 	return ret;
+}
+
+std::string Logger::argFormatToString(const char* fmt, ...) {
+	char buffer[4096] = { 0x00 };
+	va_list args;
+	va_start(args, fmt);
+	int rc = vsnprintf_s(buffer, sizeof(buffer), fmt, args);
+	va_end(args);
+	return std::string(buffer);
 }
 
 void Logger::writeToFile(std::string message) {
