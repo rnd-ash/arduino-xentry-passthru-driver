@@ -9,7 +9,11 @@ namespace ArduinoComm {
 
 	std::mutex mutex;
 	char txBuffer[255] = { 0x00 };
-
+	char rxBuffer[512] = { 0x00 };
+	int pos = 0;
+	bool inPayload = false;
+	COMSTAT com;
+	DWORD errors;
 	bool OpenPort() {
 		mutex.lock();
 		handler = CreateFile(L"COM4", GENERIC_READ | GENERIC_WRITE, NULL, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -60,6 +64,7 @@ namespace ArduinoComm {
 			LOGGER.logError("ARDUINO", "Tx payload too big!");
 			return false;
 		}
+
 		mutex.lock();
 		memset(txBuffer, 0x00, sizeof(txBuffer));
 		txBuffer[0] = 0xBB;
@@ -68,9 +73,6 @@ namespace ArduinoComm {
 		txBuffer[3] = f->data_len;
 		memcpy(&txBuffer[4], f->buffer, f->data_len);
 		txBuffer[f->data_len + 5] = 0xAA;
-		for (int i = 0; i < 64; i++) {
-			LOGGER.logInfo("TEST", "buffer -> %02X", txBuffer[i]);
-		}
 		if (!WriteFile(handler, txBuffer, f->data_len + 6, &written, NULL)) {
 			DWORD error = GetLastError();
 			LOGGER.logWarn("ARDUINO", "Error writing data! Code %d", (int) error);
@@ -84,15 +86,37 @@ namespace ArduinoComm {
 		return true;
 	}
 
-	bool readFrame(DATA_PAYLOAD* f) {
+	uint8_t len = 0xFF;
+	bool readPayload(DATA_PAYLOAD* f) {
 		mutex.lock();
-		if (!ReadFile(handler, f, sizeof(struct DATA_PAYLOAD), NULL, NULL)) {
-			LOGGER.logError("ARDUINO", "Error reading from Arduino!");
+		ClearCommError(handler, &errors, &com);
+		if (com.cbInQue >= 2 && !inPayload) {
+			int x = com.cbInQue;
+			unsigned char read = 0x00;
+			while (x > 0) {
+				ReadFile(handler, &read, 1, NULL, NULL);
+				if (read == 0xBB && !inPayload) {
+					inPayload = true;
+					ReadFile(handler, &len, 1, NULL, NULL);
+					len--; // Needed as we are not counting the len byte in payload
+					break;
+				}
+				x--;
+			}
+		}
+		if (inPayload && com.cbInQue >= len) {
+			memset(rxBuffer, 0x00, sizeof(rxBuffer));
+			ReadFile(handler, rxBuffer, len, NULL, NULL);
+			f->data_len = len - 2;
+			f->type = rxBuffer[0];
+			f->data_len = rxBuffer[1];
+			memcpy(f->buffer, &rxBuffer[2], f->data_len);
+			inPayload = false;
 			mutex.unlock();
-			return false;
+			return true;
 		}
 		mutex.unlock();
-		return true;
+		return false;
 	}
 
 	bool isConnected() {

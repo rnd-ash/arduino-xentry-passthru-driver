@@ -6,8 +6,9 @@
 #include "j2534_v0404.h"
 #include <stdint.h>
 #include <Windows.h>
+#include "can.h"
 
-#define CAN_MESSAGE_PAYLOAD 0x01;
+#define CAN_MESSAGE_PAYLOAD 0x01
 
 struct CAN_FRAME {
 	uint32_t can_id;
@@ -21,13 +22,14 @@ struct CAN_PAYLOAD {
 };
 
 struct DATA_PAYLOAD {
-	unsigned char type;
-	unsigned char data_len;
-	unsigned char buffer[248];
+	uint8_t type;
+	uint8_t data_len;
+	uint8_t buffer[248];
 };
 
 namespace CAN_HANDLER {
 	bool sendFrame(_PASSTHRU_MSG *msg);
+	void framesToPassthru(_PASSTHRU_MSG* msg, CAN_FRAME* msgs, int frames);
 };
 
 #endif

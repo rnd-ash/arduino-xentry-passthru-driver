@@ -1,6 +1,7 @@
 #include "arduino_passthru.h"
 #include "Logger.h"
 #include "can.h"
+#include "Channel.h"
 
 /*
 http://www.drewtech.com/support/passthru/open.html
@@ -37,6 +38,8 @@ DllExport PassThruConnect(unsigned long DeviceID, unsigned long ProtocolID, unsi
 	char buf[1024];
 	sprintf_s(buf, "Connect passThru: deviceID: %d, protocol: %s, Flags: %d, baudRate: %d", DeviceID, LOGGER.passThruProtocol_toString(ProtocolID).c_str(), Flags, Baudrate);
 	LOGGER.logInfo("PassThrough", "Command received: " + std::string(buf));
+	Channel* x = Channel::addChannel(*pChannelID);
+	x->setAtributes(ProtocolID, Flags);
 	return STATUS_NOERROR;
 }
 
@@ -51,6 +54,7 @@ DllExport PassThruDisconnect(unsigned long ChannelID) {
 	char buf[1024];
 	sprintf_s(buf, "Disconnect PassThru: Channel ID: %d", ChannelID);
 	LOGGER.logInfo("PassThrough", "Command received: " + std::string(buf));
+	Channel::removeChannel(ChannelID);
 	return STATUS_NOERROR;
 }
 
@@ -60,11 +64,18 @@ Receive network protocol messages, receive indications, and transmit indications
 Messages will flow through PassThru device to the User Application..
 */
 DllExport PassThruReadMsgs(unsigned long ChannelID, PASSTHRU_MSG* pMsg, unsigned long* pNumMsgs, unsigned long Timeout) {
-	/*
-	char buf[1024];
-	sprintf_s(buf, "Read Msgs: Channel ID: %d, Timeout: %d, Number of msgs: %d", ChannelID, Timeout, *pNumMsgs);
-	LOGGER.logInfo("PassThrough", "Command received: " + std::string(buf));
-	*/
+	Channel *x = Channel::getChannel(ChannelID);
+	if (x == NULL) {
+		return ERR_FAILED;
+	}
+	if (x->queue.size() == 0) {
+		return ERR_BUFFER_EMPTY;
+	}
+	for (int i = 0; i < *pNumMsgs; i++) {
+		LOGGER.logInfo("PassThrough", "Channel %d copying message to Xentry!", ChannelID);
+		memcpy(&pMsg[i], &x->queue.front(), sizeof(PASSTHRU_MSG));
+		x->queue.pop();
+	}
 	return STATUS_NOERROR;
 }
 
@@ -128,6 +139,13 @@ DllExport PassThruStartMsgFilter(unsigned long ChannelID, unsigned long FilterTy
 	LOGGER.logInfo("PassThrough", "--> Mask Message: " + LOGGER.passThruMsg_toString(pMaskMsg));
 	LOGGER.logInfo("PassThrough", "--> Pattern Message: " + LOGGER.passThruMsg_toString(pPatternMsg));
 	LOGGER.logInfo("PassThrough", "--> Flow ctrl Message: " + LOGGER.passThruMsg_toString(pFlowControlMsg));
+
+	Channel* x = Channel::getChannel(ChannelID);
+	if (x == NULL) {
+		LOGGER.logError("PassThrough", "Channel %d does not exist!", ChannelID);
+		return ERR_FAILED;
+	}
+	x->setFilters(FilterType, pMaskMsg, pPatternMsg, pFlowControlMsg);
 	return STATUS_NOERROR;
 }
 
@@ -187,16 +205,8 @@ http://www.drewtech.com/support/passthru/ioctl.html
 The PassThruIoctl function is a general purpose I/O control function for modifying the vehicle network interface's characteristics.
 */
 DllExport PassThruIoctl(unsigned long ChannelID, unsigned long IoctlID, void* pInput, void* pOutput) {
-
-	// Want battery voltage, as we cannot do that, return 12.0
-	if (IoctlID == READ_VBATT) {
-		*((int*)(pOutput)) = 12100;
-		LOGGER.logInfo("PassThrough", "Sending 12.1V via IOCTL");
-	} else {
-		char buf[1024];
-		sprintf_s(buf, "IOTCTL: Channel ID: %d ,IOCTLID: %d, Input: %d, Output: %d", ChannelID, IoctlID, pInput, pOutput);
-		LOGGER.logInfo("PassThrough", "Command received: " + std::string(buf));
-	}
-
+	SCONFIG_LIST* i = (SCONFIG_LIST*)pInput;
+	SCONFIG_LIST* o = (SCONFIG_LIST*)pOutput;
+	LOGGER.logError("PassThruIOCTL", "Invalid IOCTL [%d]!", IoctlID);
 	return STATUS_NOERROR;
 }

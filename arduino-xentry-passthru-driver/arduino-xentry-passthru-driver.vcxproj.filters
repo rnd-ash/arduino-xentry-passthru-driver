@@ -45,6 +45,9 @@
     <ClInclude Include="can.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Channel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="can.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Channel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

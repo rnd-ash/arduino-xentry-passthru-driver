@@ -1,5 +1,7 @@
 #include "Logger.h"
+#include <mutex>
 
+std::mutex mutex;
 void Logger::logInfo(std::string method, std::string message) {
 	writeToFile("[INFO ] " + method + " - " + message);
 }
@@ -17,22 +19,22 @@ void Logger::logError(std::string method, std::string message)
 void Logger::logInfo(std::string method, const char* fmt, ...) {
 	va_list fmtargs;
 	va_start(fmtargs, fmt);
-	writeToFile("[INFO ] " + method + " - " + argFormatToString(fmt, fmtargs));
-
+	writeToFile("[INFO ] " + method + " - " + argFormatToString(fmt, &fmtargs));
+	va_end(fmtargs);
 }
 
 void Logger::logWarn(std::string method, const char* fmt, ...) {
 	va_list fmtargs;
 	va_start(fmtargs, fmt);
-	writeToFile("[WARN ] " + method + " - " + argFormatToString(fmt, fmtargs));
-
+	writeToFile("[WARN ] " + method + " - " + argFormatToString(fmt, &fmtargs));
+	va_end(fmtargs);
 }
 
 void Logger::logError(std::string method, const char* fmt, ...) {
 	va_list fmtargs;
 	va_start(fmtargs, fmt);
-	writeToFile("[ERROR] " + method + " - " + argFormatToString(fmt, fmtargs));
-
+	writeToFile("[ERROR] " + method + " - " + argFormatToString(fmt, &fmtargs));
+	va_end(fmtargs);
 }
 
 std::string Logger::passThruMsg_toString(_PASSTHRU_MSG *msg) {
@@ -104,12 +106,9 @@ std::string Logger::bytesToString(int size,  unsigned char* bytes)
 	return ret;
 }
 
-std::string Logger::argFormatToString(const char* fmt, ...) {
+std::string Logger::argFormatToString(const char* fmt, va_list* args) {
 	char buffer[4096] = { 0x00 };
-	va_list args;
-	va_start(args, fmt);
-	int rc = vsnprintf_s(buffer, sizeof(buffer), fmt, args);
-	va_end(args);
+	int rc = vsnprintf_s(buffer, sizeof(buffer), fmt, *args);
 	return std::string(buffer);
 }
 
@@ -119,6 +118,7 @@ void Logger::writeToFile(std::string message) {
 	GetSystemTime(&st);
 	sprintf_s(time, "[%02d:%02d:%02d.%3d] ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 	std::ofstream handle;
+	mutex.lock();
 	try {
 		handle.open(LOG_FILE, std::ios_base::app);
 		handle << time << message << "\n" << std::flush;
@@ -130,6 +130,7 @@ void Logger::writeToFile(std::string message) {
 	catch (std::ofstream::failure e) {
 		//TODO handle error
 	}
+	mutex.unlock();
 }
 
 Logger LOGGER = Logger();

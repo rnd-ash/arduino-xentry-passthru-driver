@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "XentryComm.h"
 #include "ArduinoComm.h"
+#include "Channel.h"
 
 namespace XentryComm{
 
@@ -96,12 +97,17 @@ namespace XentryComm{
 		}
 		return true;
 	}
-
+	
+	DATA_PAYLOAD d = { 0x00 };
 	DWORD WINAPI CommLoop() {
 		LOGGER.logInfo("XentryComm::CommLoop", "Starting comm loop");
 		while (true) {
-			if (!waitForEvents()) {
-				return 1;
+			if (ArduinoComm::readPayload(&d)) {
+				switch (d.type) {
+				case CAN_MESSAGE_PAYLOAD:
+					Channel::analyzePayload(d);
+					break;
+				}
 			}
 		}
 		return 1;

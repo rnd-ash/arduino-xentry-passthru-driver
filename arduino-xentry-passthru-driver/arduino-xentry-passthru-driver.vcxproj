@@ -172,6 +172,7 @@
     <ClInclude Include="arduino_passthru.h" />
     <ClInclude Include="arduino_passthru_dll.h" />
     <ClInclude Include="can.h" />
+    <ClInclude Include="Channel.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="j2534_v0404.h" />
@@ -183,6 +184,7 @@
     <ClCompile Include="ArduinoComm.cpp" />
     <ClCompile Include="arduino_passthru.cpp" />
     <ClCompile Include="can.cpp" />
+    <ClCompile Include="Channel.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="XentryComm.cpp" />

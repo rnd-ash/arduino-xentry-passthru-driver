@@ -17,6 +17,9 @@ public:
 	void logInfo(std::string method, std::string message);
 	void logWarn(std::string method, std::string message);
 	void logError(std::string method, std::string message);
+	void logInfo(std::string method, const char* fmt, ...);
+	void logWarn(std::string method, const char* fmt, ...);
+	void logError(std::string method, const char* fmt, ...);
 	std::string error_toString(unsigned long error);
 	std::string connectDef_toString(unsigned long cStatus);
 	std::string passThruMsg_toString(_PASSTHRU_MSG *msg);
@@ -24,6 +27,7 @@ public:
 	std::string passThruProtocol_toString(unsigned long protocolID);
 	std::string bytesToString(int size, unsigned char* bytes);
 private:
+	std::string argFormatToString(const char* fmt, va_list* args);
 	void writeToFile(std::string message);
 };
 
