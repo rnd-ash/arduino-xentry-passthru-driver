@@ -20,8 +20,7 @@ public:
 	void logInfo(std::string method, const char* fmt, ...);
 	void logWarn(std::string method, const char* fmt, ...);
 	void logError(std::string method, const char* fmt, ...);
-	std::string error_toString(unsigned long error);
-	std::string connectDef_toString(unsigned long cStatus);
+	std::string payloadToString(DATA_PAYLOAD *p);
 	std::string passThruMsg_toString(_PASSTHRU_MSG *msg);
 	std::string frame_to_string(CAN_FRAME* f);
 	std::string passThruProtocol_toString(unsigned long protocolID);

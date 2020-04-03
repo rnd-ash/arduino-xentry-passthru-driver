@@ -2,6 +2,8 @@
 #include "Logger.h"
 #include "can.h"
 #include "Channel.h"
+#include "ioctlhandler.h"
+#include "ISO15765Hander.h"
 
 /*
 http://www.drewtech.com/support/passthru/open.html
@@ -71,7 +73,8 @@ DllExport PassThruReadMsgs(unsigned long ChannelID, PASSTHRU_MSG* pMsg, unsigned
 	if (x->queue.size() == 0) {
 		return ERR_BUFFER_EMPTY;
 	}
-	for (int i = 0; i < *pNumMsgs; i++) {
+	LOGGER.logInfo("PassThruReadMsgs", "Sending %d messages via channel %d", x->queue.size(), ChannelID);
+	for (int i = 0; i < min(*pNumMsgs, x->queue.size()); i++) {
 		LOGGER.logInfo("PassThrough", "Channel %d copying message to Xentry!", ChannelID);
 		memcpy(&pMsg[i], &x->queue.front(), sizeof(PASSTHRU_MSG));
 		x->queue.pop();
@@ -90,7 +93,8 @@ DllExport PassThruWriteMsgs(unsigned long ChannelID, PASSTHRU_MSG* pMsg, unsigne
 	for (unsigned long i = 0; i < *pNumMsgs; i++) {
 		LOGGER.logInfo("PassThrough", "--> Write Message: " + LOGGER.passThruMsg_toString(&pMsg[i]));
 		if (pMsg[i].ProtocolID == ISO15765) {
-			if (!CAN_HANDLER::sendFrame(&pMsg[i])) {
+			ISO15765Hander handler = ISO15765Hander();
+			if (!handler.sendPayload(&pMsg[i])) {
 				return ERROR_NOT_CONNECTED;
 			}
 		}
@@ -207,6 +211,19 @@ The PassThruIoctl function is a general purpose I/O control function for modifyi
 DllExport PassThruIoctl(unsigned long ChannelID, unsigned long IoctlID, void* pInput, void* pOutput) {
 	SCONFIG_LIST* i = (SCONFIG_LIST*)pInput;
 	SCONFIG_LIST* o = (SCONFIG_LIST*)pOutput;
-	LOGGER.logError("PassThruIOCTL", "Invalid IOCTL [%d]!", IoctlID);
+	switch (IoctlID) {
+	case SET_CONFIG:
+		setConfig(ChannelID, i);
+		break;
+	case GET_CONFIG:
+		getConfig(ChannelID, o);
+		break;
+	case READ_VBATT:
+		*(unsigned long*)pOutput = (12.1 * 1000);
+		break;
+	default:
+		LOGGER.logError("PassThruIOCTL", "Invalid IOCTL [%d]!", IoctlID);
+		break;
+	}
 	return STATUS_NOERROR;
 }

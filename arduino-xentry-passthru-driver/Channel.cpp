@@ -1,5 +1,7 @@
 #include "Channel.h"
 #include "Logger.h"
+#include "j2534_v0404.h"
+#include "ArduinoComm.h"
 
 std::map<int, Channel> Channel::channels;
 
@@ -17,6 +19,7 @@ Channel* Channel::addChannel(unsigned long id) {
 		LOGGER.logInfo("CHANNEL", "creating channel %d", id);
 		channels.insert({ id, Channel(id) });
 	}
+	LOGGER.logInfo("CHANNEL", "Now has %d channels!", channels.size());
 	return &channels.at(id);
 }
 
@@ -35,9 +38,18 @@ Channel* Channel::getChannel(unsigned long id) {
 
 void Channel::analyzePayload(DATA_PAYLOAD msg) {
 	for (std::map<int, Channel>::iterator it = channels.begin(); it != channels.end(); ++it) {
-		PASSTHRU_MSG x = { 0x00 };
-		it->second.analyzePayload(&x);
+		it->second.analyzePayload(&msg);
 	}
+}
+
+void Channel::setChannelBS(unsigned long id, unsigned long blockSize) {
+	LOGGER.logInfo("CHANNEL", "Setting channel %d's block size to %d", id, blockSize);
+	channels.at(id).setISOBlockSize(blockSize);
+}
+
+void Channel::setChannelST(unsigned long id, unsigned long min_wait_time) {
+	LOGGER.logInfo("CHANNEL", "Setting channel %d's wait time to %d ms", id, min_wait_time);
+	channels.at(id).setISOWaitTime(min_wait_time);
 }
 
 void Channel::setAtributes(unsigned long protocolID, unsigned long flags) {
@@ -48,14 +60,36 @@ void Channel::setAtributes(unsigned long protocolID, unsigned long flags) {
 
 void Channel::setFilters(unsigned long filterType, PASSTHRU_MSG* mask, PASSTHRU_MSG* pattern, PASSTHRU_MSG* flow) {
 	filter.setType(filterType);
-	filter.setPattern(mask);
+	filter.setMask(mask);
 	filter.setPattern(pattern);
-	filter.setFlow(flow);
+	if (protocolID == ISO15765) {
+		this->handler = ISO15765Hander();
+		this->handler.setFlowID((uint32_t)((flow->Data[0] << 24) | (flow->Data[1] << 16) | (flow->Data[2] << 8) | flow->Data[3]));
+	}
 }
 
-void Channel::analyzePayload(PASSTHRU_MSG* msg) {
-	if (this->filter.analyzePayload(msg)) {
-		this->queue.push(*msg);
+void Channel::analyzePayload(DATA_PAYLOAD* msg) {
+	if (this->filter.comparePayload(msg)) {
+		if (this->protocolID == ISO15765) {
+			PASSTHRU_MSG x = handler.recvPayload(msg);
+			if (x.DataSize != 0) {
+				this->queue.push(x);
+			}
+		} else {
+			LOGGER.logWarn("CHANNEL", "Unsuppored protocol ID for incomming message %d", this->protocolID);
+		}
+	}
+}
+
+void Channel::setISOBlockSize(unsigned long blockSize) {
+	if (this->protocolID == ISO15765) {
+		handler.setBlockSize(blockSize);
+	}
+}
+
+void Channel::setISOWaitTime(unsigned long minWait) {
+	if (this->protocolID == ISO15765) {
+		handler.setMinSTTime(minWait);
 	}
 }
 
@@ -77,55 +111,35 @@ void Filter::setType(unsigned long filterID) {
 
 void Filter::setMask(PASSTHRU_MSG* mask) {
 	LOGGER.logInfo("FILTER", "Setting mask filter. Size: %d", (int)mask->DataSize);
+	memset(this->mask, 0xFF, sizeof(this->mask)); // Set whole array to 0xFF so missing data is passed
 	memcpy(this->mask, mask->Data, mask->DataSize);
 	this->maskSize = mask->DataSize;
 }
 
 void Filter::setPattern(PASSTHRU_MSG* pattern) {
 	LOGGER.logInfo("FILTER", "Setting pattern filter. Size %d", (int) pattern->DataSize);
+	memset(this->pattern, 0x00, sizeof(this->pattern));
 	memcpy(this->pattern, pattern->Data, pattern->DataSize);
 	this->patternSize = pattern->DataSize;
 }
 
-void Filter::setFlow(PASSTHRU_MSG* flow) {
-	if (this->fType == FILTER_TYPE::FILTER_TYPE_FLOW_CTRL) {
-		LOGGER.logInfo("FILTER", "Setting flow filter. Size %d", (int)flow->DataSize);
-		memcpy(this->flow, flow->Data, flow->DataSize);
-		this->flowSize = flow->DataSize;
-	} else {
-		LOGGER.logInfo("FILTER", "Not setting flow filter");
-		this->flowSize = 0;
-	}
-}
-
-bool Filter::analyzePayload(PASSTHRU_MSG* msg) {
-	this->maskData(msg); // Masks message first
-	// Now use the masked data for comparisons
-	bool matches = true;
-	for (int i = 0; i < patternSize; i++) {
-		// Check pattern filter against the masked data
-		if (pattern[i] != 0 && (pattern[i] & maskedData[i] == 0)) {
-			switch (this->fType) {
-			case FILTER_TYPE::FILTER_TYPE_BLOCK: // Block. So as this is 0, we allow it
-				return true;
-			default:
-				matches = false; // Pass / flow ctrl. Doesn't match
-			}
+bool Filter::comparePayload(DATA_PAYLOAD* msg) {
+	// Behaviour allow on match
+	int matchedBytes = 0;
+	int len = 4; // Just compare the ID - Don't actually care about the message contents (for now)
+	for (int i = 0; i < len; i++) {
+		// Filter pass / Flow control - Compare to pattern filter
+		if (this->fType == FILTER_TYPE::FILTER_TYPE_PASS || this->fType == FILTER_TYPE::FILTER_TYPE_FLOW_CTRL) {
+			if ((msg->buffer[i] & mask[i]) == pattern[i]) matchedBytes++;
+		}
+		// Filter type block - Compare AGAINST pattern filter
+		else {
+			if ((msg->buffer[i] & mask[i]) != pattern[i]) matchedBytes++;
 		}
 	}
-
-	// Flow control requires an extra step to verify data
-	if (this->fType == FILTER_TYPE::FILTER_TYPE_FLOW_CTRL) {
-
+	if (matchedBytes != len) {
+		return false;
 	}
-	
-	return matches;
-}
-
-void Filter::maskData(PASSTHRU_MSG* msg) {
-	memset(this->maskedData, 0x00, sizeof(this->maskedData));
-	memcpy(this->maskedData, msg->Data, msg->DataSize);
-	for (int i = 0; i < this->maskSize; i++) {
-		this->maskedData[i] &= this->mask[i];
-	}
+	LOGGER.logInfo("FILTER", "Found match!: "+LOGGER.payloadToString(msg));
+	return true;
 }

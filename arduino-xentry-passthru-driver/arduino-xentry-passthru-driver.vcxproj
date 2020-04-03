@@ -175,6 +175,8 @@
     <ClInclude Include="Channel.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="ioctlhandler.h" />
+    <ClInclude Include="ISO15765Hander.h" />
     <ClInclude Include="j2534_v0404.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="pch.h" />
@@ -186,6 +188,8 @@
     <ClCompile Include="can.cpp" />
     <ClCompile Include="Channel.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="ioctlhandler.cpp" />
+    <ClCompile Include="ISO15765Hander.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="XentryComm.cpp" />
   </ItemGroup>

@@ -73,15 +73,13 @@ namespace ArduinoComm {
 		txBuffer[3] = f->data_len;
 		memcpy(&txBuffer[4], f->buffer, f->data_len);
 		txBuffer[f->data_len + 5] = 0xAA;
+		LOGGER.logInfo("ARDUINO", "Sending payload! "+LOGGER.payloadToString(f));
 		if (!WriteFile(handler, txBuffer, f->data_len + 6, &written, NULL)) {
 			DWORD error = GetLastError();
 			LOGGER.logWarn("ARDUINO", "Error writing data! Code %d", (int) error);
 			mutex.unlock();
 			return false;
 		}
-		char buf2[64];
-		sprintf_s(buf2, "Wrote %d bytes", f->data_len+4);
-		LOGGER.logInfo("ARDUINO", std::string(buf2));
 		mutex.unlock();
 		return true;
 	}

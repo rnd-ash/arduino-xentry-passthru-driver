@@ -4,6 +4,7 @@
 #include <map>
 #include <queue>
 #include <iostream>
+#include "ISO15765Hander.h"
 
 class Filter {
 public:
@@ -16,18 +17,14 @@ public:
 	void setType(unsigned long filterID);
 	void setMask(PASSTHRU_MSG* mask);
 	void setPattern(PASSTHRU_MSG* pattern);
-	void setFlow(PASSTHRU_MSG* flow);
-	bool analyzePayload(PASSTHRU_MSG* msg);
-	void maskData(PASSTHRU_MSG* msg);
+	bool comparePayload(DATA_PAYLOAD* msg);
 private:
 	FILTER_TYPE fType;
 	int maskSize = 0;
 	int patternSize = 0;
-	int flowSize = 0;
-	char mask[4096] = { 0x00 };
-	char pattern[4096] = { 0x00 };
-	char flow[4096] = { 0x00 };
-	char maskedData[4096] = { 0x00 };
+	uint8_t mask[256] = { 0xFF };
+	uint8_t pattern[256] = { 0x00 };
+	uint8_t isoBits[256] = { 0x00 };
 };
 
 class Channel {
@@ -37,15 +34,20 @@ public:
 	static void removeChannel(unsigned long id);
 	static Channel* getChannel(unsigned long id);
 	static void analyzePayload(DATA_PAYLOAD msg);
+	static void setChannelBS(unsigned long id, unsigned long blockSize);
+	static void setChannelST(unsigned long id, unsigned long min_wait_time);
 	void setAtributes(unsigned long protocolID, unsigned long flags);
 	void setFilters(unsigned long filterType, PASSTHRU_MSG* mask, PASSTHRU_MSG* pattern, PASSTHRU_MSG* flow);
 	std::queue<PASSTHRU_MSG> queue;
 private:
-	void analyzePayload(PASSTHRU_MSG* msg);
+	ISO15765Hander handler;
+	void analyzePayload(DATA_PAYLOAD* msg);
 	static std::map<int,Channel> channels;
-	unsigned long flags;
-	unsigned long id;
-	unsigned long protocolID;
+	unsigned long flags = 0;
+	unsigned long id = 0;
+	unsigned long protocolID = 0;
+	void setISOBlockSize(unsigned long blockSize);
+	void setISOWaitTime(unsigned long minWait);
 	Filter filter;
 };
 

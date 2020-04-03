@@ -16,11 +16,6 @@ struct CAN_FRAME {
 	__declspec(align(8)) uint8_t data[8];
 };
 
-struct CAN_PAYLOAD {
-	CAN_FRAME payload[10]; // Max for ISO message
-	int frame_count;
-};
-
 struct DATA_PAYLOAD {
 	uint8_t type;
 	uint8_t data_len;
@@ -28,8 +23,8 @@ struct DATA_PAYLOAD {
 };
 
 namespace CAN_HANDLER {
-	bool sendFrame(_PASSTHRU_MSG *msg);
-	void framesToPassthru(_PASSTHRU_MSG* msg, CAN_FRAME* msgs, int frames);
+	void payloadToFrame(DATA_PAYLOAD* p, CAN_FRAME* f);
+	void frameToPayload(DATA_PAYLOAD* p, CAN_FRAME* f);
 };
 
 #endif

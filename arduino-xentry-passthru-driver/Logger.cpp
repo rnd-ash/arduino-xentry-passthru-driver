@@ -37,6 +37,16 @@ void Logger::logError(std::string method, const char* fmt, ...) {
 	va_end(fmtargs);
 }
 
+std::string Logger::payloadToString(DATA_PAYLOAD* p) {
+	std::string x = "";
+	char buf[4] = { 0x00 };
+	for (int i = 0; i < p->data_len; i++) {
+		sprintf(buf, "%02X ", p->buffer[i]);
+		x += buf;
+	}
+	return x;
+}
+
 std::string Logger::passThruMsg_toString(_PASSTHRU_MSG *msg) {
 	char buf[5120] = { 0x00 };
 	if (msg != NULL) {
